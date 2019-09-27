@@ -10,7 +10,7 @@ COPY package*.json /usr/src/app/
 RUN npm install --unsafe-perm
 COPY . .
 
-FROM node:10.13-alpine
+FROM node:10.13
 WORKDIR /usr/src/app
 COPY --from=0 /usr/src/app .
 EXPOSE 3000

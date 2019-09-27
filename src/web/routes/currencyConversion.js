@@ -1,8 +1,12 @@
 module.exports = async (req, res) => {
-  // required_currency_code
-  // ammount
-  // paying_currency_code
-  // {"paying_currency_code": "USD", "ammount": 450}
-  // validation!!!
-  res.status(200).json({ rate: await (await res.locals.getModels()).dataFixerIo.getRateUsingEurAsBase('EUR', 'USD') });
+  // TODO validation
+  let rate = await (await res.locals.getModels())
+    .dataFixerIo
+    .getRateUsingEurAsBase(req.query.required_currency_code, req.query.paying_currency_code);
+
+  res.status(200).json(
+    {
+      "paying_currency_code": req.query.paying_currency_code,
+      "ammount": Number(req.query.ammount) * rate,
+    });
 };

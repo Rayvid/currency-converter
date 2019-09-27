@@ -1,3 +1,3 @@
 const currencyRate = require('./currencyRate');
 
-module.exports = config => currencyRate(config);
+module.exports = (config, ratesDbConnection) => currencyRate(config, ratesDbConnection);

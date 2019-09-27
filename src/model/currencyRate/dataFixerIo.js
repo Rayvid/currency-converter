@@ -1,7 +1,9 @@
 const exceptions = require('../../exceptions');
 const fetch = require('node-fetch');
+const schema = require('../schema');
+const logger = require('../../util/logger')();
 
-module.exports = (config) => {
+module.exports = (config, ratesDbConnection) => {
   return {
     getRate:
       async (currFrom, currTo) => {
@@ -9,23 +11,40 @@ module.exports = (config) => {
       },
     getRateUsingEurAsBase:
       async (currFrom, currTo) => {
-        let eurRates = {};
-        try {
-          eurRates = await (await fetch(
-            config.currencyConverter.templateFixerUrl.replace(
-              '{access_key}',
-              config.currencyConverter.fixerAccessKey))).json();
+        let eurRates = { rates: await schema.rateSchema.getActiveSchema(ratesDbConnection).find().sort({ updatedAt: -1 }).lean() };
+        if (!eurRates || eurRates.rates.length === 0 || eurRates.rates[0].updatedAt.getTime() < Date.now() - 10000 /* 10 sec */)
+        {
+          logger.info('Fetching newest rates');
+          try {
+            eurRates = await (await fetch(
+              config.currencyConverter.templateFixerUrl.replace(
+                '{access_key}',
+                config.currencyConverter.fixerAccessKey))).json();
 
-          if (eurRates && eurRates.error) {
-            throw new Error(JSON.stringify(eurRates.error));
+            if (eurRates && eurRates.error) {
+              throw new Error(JSON.stringify(eurRates.error));
+            }
+          } catch (err) {
+            // All infra/logic errors will be sinked there, using custom exception class to preserve original error and stacktrace
+            throw new exceptions.ModelException({ message: 'Conversion service down, please try again later', innerError: err });
           }
-        } catch (err) {
-          // All infra/logic errors will be sinked there, using custom exception class to preserve original error and stacktrace
-          throw new exceptions.ModelException({ message: 'Conversion service down, please try again later', innerError: err });
-        }
 
-        if (!eurRates || !eurRates.success || !eurRates.rates) {
-          throw new exceptions.ModelException({ message: 'Conversion service down, please try again later' });
+          if (!eurRates || !eurRates.success || !eurRates.rates) {
+            throw new exceptions.ModelException({ message: 'Conversion service down, please try again later' });
+          }
+
+          for (key in eurRates.rates) {
+            await schema.rateSchema.getActiveSchema(ratesDbConnection)
+              .findOneAndUpdate({
+                currency: key,
+              }, { currency: key, rate: eurRates.rates[key], updatedAt: Date.now() }, { upsert: true, useFindAndModify: false });
+          }
+        } else {
+          logger.info('Rates cache is recent enough to reuse');
+          for (key in eurRates.rates) {
+            eurRates.rates[eurRates.rates[key].currency] = eurRates.rates[key].rate;
+            delete eurRates.rates[key];
+          }
         }
 
         try {
