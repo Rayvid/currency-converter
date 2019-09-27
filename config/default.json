@@ -28,5 +28,9 @@
   },
   "sentry": {
     "dsn": ""
+  },
+  "currencyConverter": {
+    "templateFixerUrl": "http://data.fixer.io/api/latest?access_key={access_key}&base=EUR",
+    "fixerAccessKey": "movedToConfig"
   }
 }

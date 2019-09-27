@@ -1,3 +1,3 @@
-const sportsAppRepositoryInitializer = require('./sportsAppRepository');
+const currencyRate = require('./currencyRate');
 
-module.exports = dbConnection => sportsAppRepositoryInitializer(dbConnection);
+module.exports = config => currencyRate(config);

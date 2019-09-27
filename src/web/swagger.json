@@ -25,11 +25,6 @@
       "name": "Authorization"
     }
   },
-  "security": [
-    {
-      "jwt": "Bearer <base64 encoded jwt>"
-    }
-  ],
   "paths": {
     "/health": {
       "get": {

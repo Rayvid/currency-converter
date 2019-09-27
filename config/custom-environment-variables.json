@@ -28,5 +28,9 @@
   },
   "sentry": {
     "dsn": "SENTRY_DSN"
+  },
+  "currencyConverter": {
+    "templateFixerUrl": "TEMPLATE_FIXER_URL",
+    "fixerAccessKey": "FIXER_ACCESS_KEY"
   }
 }
