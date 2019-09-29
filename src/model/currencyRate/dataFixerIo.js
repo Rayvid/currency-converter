@@ -48,7 +48,7 @@ module.exports = (config, ratesDbConnection) => {
         }
 
         try {
-          if (eurRates.rates[currFrom.toUpperCase()] <= 0 && eurRates.rates[currTo.toUpperCase()] <= 0) {
+          if ((eurRates.rates[currFrom.toUpperCase()] || 0) <= 0 || (eurRates.rates[currTo.toUpperCase()] || 0) <= 0) {
             throw new Error('Cannot get actual rates');
           }
         } catch (err) {
@@ -56,7 +56,7 @@ module.exports = (config, ratesDbConnection) => {
           throw new exceptions.ModelException({ message: 'Conversion service cannot provide rates you requested for conversion', innerError: err });
         }
 
-        return (1 / eurRates.rates[currFrom]) * eurRates.rates[currTo];
+        return (1 / eurRates.rates[currFrom.toUpperCase()]) * eurRates.rates[currTo.toUpperCase()];
       },
   };
 };
